@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#161825" />
+    <title>Harmony Pad</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./ui.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Offline pad playground</p>
+        <h1>Harmony Pad</h1>
+      </div>
+      <div class="controls" aria-label="Sound controls">
+        <label class="control" for="volume">
+          <span>Volume</span>
+          <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" />
+        </label>
+        <label class="control toggle">
+          <span>Reverb</span>
+          <input id="reverb" type="checkbox" checked />
+        </label>
+      </div>
+    </header>
+    <main>
+      <div id="status" role="status" aria-live="polite" class="status"></div>
+      <div class="grid" id="chord-grid" aria-label="Chord pads"></div>
+    </main>
+    <script type="module" src="../src/main.js"></script>
+  </body>
+</html>
