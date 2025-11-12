@@ -10,12 +10,15 @@ let activePointerId = null;
 let latchedChord = null;
 let activeButtonId = null;
 
-CHORDS.forEach((chord) => {
+CHORDS.forEach((chord, index) => {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'chord';
   btn.textContent = chord.label;
   btn.dataset.chord = chord.id;
+  const rowIndex = Math.floor(index / 3);
+  const role = rowIndex === 1 || rowIndex === 2 ? 'diatonic' : 'dominant';
+  btn.dataset.role = role;
   btn.setAttribute('aria-label', `Play ${chord.label} chord`);
   btn.addEventListener('pointerdown', (event) => handlePointerDown(event, chord.id));
   btn.addEventListener('pointerup', (event) => handlePointerEnd(event));

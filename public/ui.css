@@ -77,9 +77,28 @@ button.chord:focus-visible {
 }
 
 button.chord[data-pressed='true'] {
-  background: var(--button-pressed);
   transform: translateY(2px) scale(0.99);
   box-shadow: 0 12px 30px rgba(20, 30, 60, 0.7);
+}
+
+button.chord[data-role='dominant'] {
+  background: #050505;
+  color: #fefefe;
+}
+
+button.chord[data-role='diatonic'] {
+  background: #fefefe;
+  color: #050505;
+}
+
+button.chord[data-role='dominant'][data-pressed='true'] {
+  background: #fefefe;
+  color: #050505;
+}
+
+button.chord[data-role='diatonic'][data-pressed='true'] {
+  background: #050505;
+  color: #fefefe;
 }
 
 button.chord:disabled {

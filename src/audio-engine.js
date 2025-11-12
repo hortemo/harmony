@@ -1,14 +1,17 @@
 const DEFAULT_ENV = {
-  attack: 0.16,
-  decay: 0.6,
-  sustain: 0.7,
-  release: 1.1
+  attack: 0.28,
+  decay: 0.9,
+  sustain: 0.65,
+  release: 1.7
 };
 
-const FILTER_CUTOFF = 1500;
-const FILTER_Q = 0.8;
-const DETUNE_CENTS = 8;
-const REVERB_SEND = 0.35;
+const FILTER_CUTOFF = 1200;
+const FILTER_Q = 0.7;
+const DETUNE_CENTS = 6;
+const REVERB_SEND = 0.42;
+const PEAK_LEVEL = 0.85;
+const PRIMARY_GAIN = 0.85;
+const SECONDARY_GAIN = 0.65;
 
 const IR_URL = './ir/room-impulse.wav';
 
@@ -127,18 +130,25 @@ export class AudioEngine {
   #createVoice(frequency, startTime) {
     const oscA = this.audioCtx.createOscillator();
     const oscB = this.audioCtx.createOscillator();
-    oscA.type = 'sawtooth';
-    oscB.type = 'sawtooth';
+    oscA.type = 'triangle';
+    oscB.type = 'sine';
     oscA.frequency.setValueAtTime(frequency, startTime);
     oscB.frequency.setValueAtTime(frequency, startTime);
     oscA.detune.value = -DETUNE_CENTS;
     oscB.detune.value = DETUNE_CENTS;
 
+    const oscGainA = this.audioCtx.createGain();
+    oscGainA.gain.value = PRIMARY_GAIN;
+    const oscGainB = this.audioCtx.createGain();
+    oscGainB.gain.value = SECONDARY_GAIN;
+
     const gainNode = this.audioCtx.createGain();
     gainNode.gain.setValueAtTime(0.0001, startTime);
 
-    oscA.connect(gainNode);
-    oscB.connect(gainNode);
+    oscA.connect(oscGainA);
+    oscB.connect(oscGainB);
+    oscGainA.connect(gainNode);
+    oscGainB.connect(gainNode);
 
     const filter = this.audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -153,12 +163,11 @@ export class AudioEngine {
 
     const attackEnd = startTime + this.env.attack;
     const decayEnd = attackEnd + this.env.decay;
-    gainNode.gain.exponentialRampToValueAtTime(1, Math.max(attackEnd, startTime + 0.01));
-    gainNode.gain.exponentialRampToValueAtTime(Math.max(this.env.sustain, 0.01), Math.max(decayEnd, attackEnd + 0.01));
+    gainNode.gain.exponentialRampToValueAtTime(PEAK_LEVEL, Math.max(attackEnd, startTime + 0.01));
+    gainNode.gain.exponentialRampToValueAtTime(Math.max(this.env.sustain * PEAK_LEVEL, 0.01), Math.max(decayEnd, attackEnd + 0.01));
 
     oscA.start(startTime);
     oscB.start(startTime);
-
     return { oscillators: [oscA, oscB], gainNode };
   }
 
