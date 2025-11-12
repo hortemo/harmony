@@ -2,19 +2,13 @@ import { CHORDS, voiceChord } from './chords.js';
 import { AudioEngine } from './audio-engine.js';
 
 const gridEl = document.getElementById('chord-grid');
-const statusEl = document.getElementById('status');
-const volumeEl = document.getElementById('volume');
-const reverbEl = document.getElementById('reverb');
-
 const engine = new AudioEngine();
+engine.setVolume(0.5);
 const buttons = new Map();
 const pointerChord = new Map();
 let activePointerId = null;
 let latchedChord = null;
 let activeButtonId = null;
-
-const audioUnlockedText = 'Tap any chord to unlock audio';
-statusEl.textContent = audioUnlockedText;
 
 CHORDS.forEach((chord) => {
   const btn = document.createElement('button');
@@ -52,9 +46,15 @@ async function handlePointerDown(event, chordId) {
 }
 
 function handlePointerEnd(event) {
+  if (event.type === 'pointerleave' && event.buttons !== 0) {
+    return;
+  }
   const chordId = pointerChord.get(event.pointerId);
   pointerChord.delete(event.pointerId);
   if (!chordId) {
+    if (activePointerId === event.pointerId) {
+      activePointerId = null;
+    }
     return;
   }
   if (activePointerId !== event.pointerId) {
@@ -62,6 +62,30 @@ function handlePointerEnd(event) {
   }
   activePointerId = null;
   stopChord(chordId);
+}
+
+function handlePointerMove(event) {
+  if (activePointerId !== event.pointerId) {
+    return;
+  }
+  const currentChordId = pointerChord.get(event.pointerId);
+  const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('button.chord');
+  const nextChordId = targetButton?.dataset.chord || null;
+  if (nextChordId === currentChordId) {
+    return;
+  }
+  if (!nextChordId) {
+    if (currentChordId) {
+      stopChord(currentChordId, { keepPointer: true, silent: true });
+    }
+    pointerChord.set(event.pointerId, null);
+    return;
+  }
+  if (currentChordId) {
+    stopChord(currentChordId, { keepPointer: true, silent: true });
+  }
+  pointerChord.set(event.pointerId, nextChordId);
+  playChord(nextChordId, 'pointer');
 }
 
 function handleKeyDown(event, chordId) {
@@ -104,14 +128,18 @@ function playChord(chordId, source = 'pointer') {
   }
 }
 
-function stopChord(chordId) {
+function stopChord(chordId, options = {}) {
   setPressed(chordId, false);
   engine.stopChord(chordId);
-  updateStatus('');
+  if (!options.silent) {
+    updateStatus('');
+  }
   if (activeButtonId === chordId) {
     activeButtonId = null;
   }
-  activePointerId = null;
+  if (!options.keepPointer) {
+    activePointerId = null;
+  }
 }
 
 function setPressed(chordId, state) {
@@ -121,18 +149,7 @@ function setPressed(chordId, state) {
   }
 }
 
-function updateStatus(text) {
-  statusEl.textContent = text || '\u00a0';
-}
-
-volumeEl?.addEventListener('input', (event) => {
-  const value = parseFloat(event.target.value);
-  engine.setVolume(value);
-});
-
-reverbEl?.addEventListener('change', (event) => {
-  engine.setReverbEnabled(event.target.checked);
-});
+function updateStatus() {}
 
 window.addEventListener('blur', () => {
   if (engine.currentChordId) {
@@ -150,3 +167,4 @@ if ('serviceWorker' in navigator) {
 
 window.addEventListener('online', () => updateStatus('Back online'));
 window.addEventListener('offline', () => updateStatus('Offline mode'));
+window.addEventListener('pointermove', (event) => handlePointerMove(event));

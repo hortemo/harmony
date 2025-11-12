@@ -7,11 +7,17 @@
   --accent-strong: #d4e1ff;
   --button-bg: #1c2233;
   --button-pressed: #31406a;
-  --grid-gap: clamp(0.65rem, 2vw, 1rem);
+  --grid-line: rgba(255, 255, 255, 0.12);
 }
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -20,91 +26,42 @@ body {
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at top, rgba(137, 169, 255, 0.25), transparent 55%) #07090f;
-  padding: clamp(1rem, 3vw, 2.5rem);
-  gap: 1.25rem;
+  padding: 0;
 }
 
-body, button {
+body,
+button {
   font-family: inherit;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 0.4rem;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(2rem, 6vw, 3.5rem);
-}
-
-.controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-}
-
-.control {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.85rem;
-  gap: 0.3rem;
-}
-
-.control input[type='range'] {
-  width: 140px;
-}
-
-.control.toggle {
-  flex-direction: row;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-#reverb {
-  accent-color: var(--accent);
 }
 
 main {
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-.status {
-  min-height: 1rem;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  justify-content: center;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--grid-gap);
+  gap: 1px;
   flex: 1;
+  grid-auto-rows: minmax(0, 1fr);
+  background: var(--grid-line);
+  border: 1px solid var(--grid-line);
+  border-radius: clamp(0.85rem, 2.5vw, 1.1rem);
+  overflow: hidden;
+  margin: 0.5rem;
 }
 
 button.chord {
   touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   background: var(--button-bg);
   border: none;
-  border-radius: clamp(0.9rem, 3vw, 1.2rem);
+  border-radius: 0;
   color: inherit;
   font-size: clamp(1.4rem, 5vw, 2rem);
   font-weight: 600;
@@ -127,21 +84,6 @@ button.chord[data-pressed='true'] {
 
 button.chord:disabled {
   opacity: 0.5;
-}
-
-@media (max-width: 520px) {
-  body {
-    padding: 1rem;
-  }
-
-  .controls {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .control input[type='range'] {
-    width: min(180px, 45vw);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
