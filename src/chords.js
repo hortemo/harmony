@@ -18,6 +18,9 @@ const NOTE_OFFSETS = {
   B: 11
 };
 
+const SHARP_PITCHES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLAT_PITCHES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
 const BASE_A4_FREQ = 440;
 const A4_MIDI = 69;
 
@@ -46,19 +49,43 @@ export function noteToFrequency(note) {
   return midiToFrequency(noteToMidi(note));
 }
 
+export const CHORD_TYPES = [
+  { id: 'major', label: 'major', intervals: [0, 4, 7], suffix: '' },
+  { id: '7', label: '7', intervals: [0, 4, 7, 10], suffix: '7' },
+  { id: 'maj7', label: 'maj7', intervals: [0, 4, 7, 11], suffix: 'maj7' },
+  { id: 'm', label: 'm', intervals: [0, 3, 7], suffix: 'm' },
+  { id: 'm7', label: 'm7', intervals: [0, 3, 7, 10], suffix: 'm7' },
+  { id: 'mMaj7', label: 'm(maj7)', intervals: [0, 3, 7, 11], suffix: 'm(maj7)' },
+  { id: 'dim', label: 'dim', intervals: [0, 3, 6], suffix: 'dim' },
+  { id: 'm7b5', label: 'm7b5', intervals: [0, 3, 6, 10], suffix: 'm7b5' },
+  { id: 'dim7', label: 'dim7', intervals: [0, 3, 6, 9], suffix: 'dim7' },
+  { id: 'sus4', label: 'sus4', intervals: [0, 5, 7], suffix: 'sus4' },
+  { id: '7sus4', label: '7sus4', intervals: [0, 5, 7, 10], suffix: '7sus4' },
+  { id: '11', label: '11', intervals: [0, 4, 7, 10, 17], suffix: '11' }
+];
+
+const CHORD_TYPE_MAP = new Map(CHORD_TYPES.map((type) => [type.id, type]));
+
 export const CHORDS = [
-  { id: 'G7', label: 'V7', tones: ['G', 'B', 'D', 'F'] },
-  { id: 'A7', label: 'VI7', tones: ['A', 'C#', 'E', 'G'] },
-  { id: 'B7', label: 'VII7', tones: ['B', 'D#', 'F#', 'A'] },
-  { id: 'C', label: 'I', tones: ['C', 'E', 'G'] },
-  { id: 'Dm', label: 'IIm', tones: ['D', 'F', 'A'] },
-  { id: 'Em', label: 'IIIm', tones: ['E', 'G', 'B'] },
-  { id: 'F', label: 'IV', tones: ['F', 'A', 'C'] },
-  { id: 'G', label: 'V', tones: ['G', 'B', 'D'] },
-  { id: 'Am', label: 'VIm', tones: ['A', 'C', 'E'] },
-  { id: 'C7', label: 'I7', tones: ['C', 'E', 'G', 'Bb'] },
-  { id: 'D7', label: 'II7', tones: ['D', 'F#', 'A', 'C'] },
-  { id: 'E7', label: 'III7', tones: ['E', 'G#', 'B', 'D'] }
+  { id: 'C', label: 'I', tones: ['C', 'E', 'G'], root: 'C', chordType: 'major', allowModifiers: true },
+  { id: 'Dm', label: 'IIm', tones: ['D', 'F', 'A'], root: 'D', chordType: 'm', allowModifiers: true },
+  { id: 'Em', label: 'IIIm', tones: ['E', 'G', 'B'], root: 'E', chordType: 'm', allowModifiers: true },
+  { id: 'F', label: 'IV', tones: ['F', 'A', 'C'], root: 'F', chordType: 'major', allowModifiers: true },
+  { id: 'G', label: 'V', tones: ['G', 'B', 'D'], root: 'G', chordType: 'major', allowModifiers: true },
+  { id: 'Am', label: 'VIm', tones: ['A', 'C', 'E'], root: 'A', chordType: 'm', allowModifiers: true },
+  { id: 'Bb', label: 'bVII', tones: ['Bb', 'D', 'F'], root: 'Bb', chordType: 'major', allowModifiers: true },
+  { id: 'C#dim', label: '#I°', tones: ['C#', 'E', 'G'], root: 'C#', chordType: 'dim' },
+  { id: 'D#dim', label: '#II°', tones: ['D#', 'F#', 'A'], root: 'D#', chordType: 'dim' },
+  { id: 'F#dim', label: '#IV°', tones: ['F#', 'A', 'C'], root: 'F#', chordType: 'dim' },
+  { id: 'G#dim', label: 'V#°', tones: ['G#', 'B', 'D'], root: 'G#', chordType: 'dim' },
+  { id: 'Bdim', label: 'VII°', tones: ['B', 'D', 'F'], root: 'B', chordType: 'dim' },
+  { id: 'C7', label: 'I7', tones: ['C', 'E', 'G', 'Bb'], root: 'C', chordType: '7' },
+  { id: 'D7', label: 'II7', tones: ['D', 'F#', 'A', 'C'], root: 'D', chordType: '7' },
+  { id: 'E7', label: 'III7', tones: ['E', 'G#', 'B', 'D'], root: 'E', chordType: '7' },
+  { id: 'F7', label: 'IV7', tones: ['F', 'A', 'C', 'Eb'], root: 'F', chordType: '7' },
+  { id: 'G7', label: 'V7', tones: ['G', 'B', 'D', 'F'], root: 'G', chordType: '7' },
+  { id: 'A7', label: 'VI7', tones: ['A', 'C#', 'E', 'G'], root: 'A', chordType: '7' },
+  { id: 'B7', label: 'VII7', tones: ['B', 'D#', 'F#', 'A'], root: 'B', chordType: '7' }
 ];
 
 const DEFAULT_ROOT_OCTAVE = 3;
@@ -73,6 +100,37 @@ let lastVoicing = null;
 
 export function getChord(id) {
   return CHORD_MAP.get(id);
+}
+
+export function ensureChordVariant(baseId, typeId) {
+  const baseChord = getChord(baseId);
+  if (!baseChord) {
+    throw new Error(`Chord ${baseId} missing`);
+  }
+  const targetType = typeId || baseChord.chordType;
+  if (!targetType || targetType === baseChord.chordType) {
+    return baseChord;
+  }
+  const variantId = `${baseId}__${targetType}`;
+  const existing = CHORD_MAP.get(variantId);
+  if (existing) {
+    return existing;
+  }
+  if (!baseChord.root) {
+    return baseChord;
+  }
+  const tones = buildChordFromType(baseChord.root, targetType);
+  const typeMeta = CHORD_TYPE_MAP.get(targetType);
+  const variantLabel = typeMeta ? `${baseChord.label} ${typeMeta.label}` : `${baseChord.label} ${targetType}`;
+  const variant = {
+    ...baseChord,
+    id: variantId,
+    label: variantLabel,
+    tones,
+    chordType: targetType
+  };
+  CHORD_MAP.set(variantId, variant);
+  return variant;
 }
 
 export function voiceChord(id) {
@@ -223,4 +281,19 @@ function clampToRange(notes) {
     guard += 1;
   }
   return result;
+}
+
+function buildChordFromType(root, typeId) {
+  const baseOffset = NOTE_OFFSETS[root];
+  const type = CHORD_TYPE_MAP.get(typeId);
+  if (typeof baseOffset === 'undefined' || !type) {
+    throw new Error(`Cannot build chord for ${root} (${typeId})`);
+  }
+  const preferFlat = root.includes('b');
+  return type.intervals.map((interval) => pitchFromOffset(baseOffset + interval, preferFlat));
+}
+
+function pitchFromOffset(offset, preferFlat = false) {
+  const index = ((offset % 12) + 12) % 12;
+  return preferFlat ? FLAT_PITCHES[index] : SHARP_PITCHES[index];
 }
