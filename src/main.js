@@ -50,8 +50,21 @@ if (!tileFontObserver) {
     responsiveTiles.forEach((tile) => applyTileFontSize(tile));
   });
 }
+
+function preloadAudioEngine(engineInstance) {
+  const warmup = () => {
+    engineInstance.init().catch((err) => console.warn('Audio warmup failed', err));
+  };
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    warmup();
+  } else {
+    window.addEventListener('DOMContentLoaded', warmup, { once: true });
+  }
+}
+
 const engine = new AudioEngine();
 engine.setVolume(0.5);
+preloadAudioEngine(engine);
 const pointerChord = new Map();
 const typeButtons = new Map();
 const typePointerState = new Map();
