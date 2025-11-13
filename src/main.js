@@ -20,31 +20,62 @@ const TYPE_META = new Map();
 CHORD_TYPES.forEach((type) => TYPE_META.set(type.id, type));
 
 const TILE_LAYOUT = [
-  { chordId: 'C', label: 'I', variant: 'main', row: 1, column: 1 },
-  { chordId: 'C#dim', label: '#I°', variant: 'border', orientation: 'vertical', row: 1, column: 2 },
-  { chordId: 'Dm', label: 'IIm', variant: 'main', row: 1, column: 3 },
-  { chordId: 'D#dim', label: '#II°', variant: 'border', orientation: 'vertical', row: 1, column: 4 },
-  { chordId: 'Em', label: 'IIIm', variant: 'main', row: 1, column: 5 },
-  { chordId: 'C7', label: 'I7', variant: 'border', orientation: 'horizontal', row: 2, column: 1 },
-  { chordId: null, variant: 'spacer', row: 2, column: 2 },
-  { chordId: 'D7', label: 'II7', variant: 'border', orientation: 'horizontal', row: 2, column: 3 },
-  { chordId: null, variant: 'spacer', row: 2, column: 4 },
-  { chordId: 'E7', label: 'III7', variant: 'border', orientation: 'horizontal', row: 2, column: 5 },
-  { chordId: 'F', label: 'IV', variant: 'main', row: 3, column: 1 },
-  { chordId: 'F#dim', label: '#IV°', variant: 'border', orientation: 'vertical', row: 3, column: 2 },
-  { chordId: 'G', label: 'V', variant: 'main', row: 3, column: 3 },
-  { chordId: 'G#dim', label: 'V#°', variant: 'border', orientation: 'vertical', row: 3, column: 4 },
-  { chordId: 'Am', label: 'VIm', variant: 'main', row: 3, column: 5 },
-  { chordId: 'F7', label: 'IV7', variant: 'border', orientation: 'horizontal', row: 4, column: 1 },
-  { chordId: null, variant: 'spacer', row: 4, column: 2 },
-  { chordId: 'G7', label: 'V7', variant: 'border', orientation: 'horizontal', row: 4, column: 3 },
-  { chordId: null, variant: 'spacer', row: 4, column: 4 },
-  { chordId: 'A7', label: 'VI7', variant: 'border', orientation: 'horizontal', row: 4, column: 5 },
-  { chordId: 'Bb', label: 'bVII', variant: 'main', row: 5, column: 1 },
-  { chordId: 'Bdim', label: 'VII°', variant: 'border', orientation: 'vertical', row: 5, column: 2 },
-  { chordId: 'C', label: 'I', variant: 'main', row: 5, column: 3 },
-  { chordId: 'C#dim', label: '#I°', variant: 'border', orientation: 'vertical', row: 5, column: 4 },
-  { type: 'modifier-grid', row: 5, column: 5 }
+  // Top outer row
+  { chordId: null, variant: 'spacer', row: 1, column: 1 },
+  { chordId: 'G7', variant: 'border', orientation: 'horizontal', row: 1, column: 2 },
+  { chordId: null, variant: 'spacer', row: 1, column: 3 },
+  { chordId: 'A7', variant: 'border', orientation: 'horizontal', row: 1, column: 4 },
+  { chordId: null, variant: 'spacer', row: 1, column: 5 },
+  { chordId: 'B7', variant: 'border', orientation: 'horizontal', row: 1, column: 6 },
+  { chordId: null, variant: 'spacer', row: 1, column: 7 },
+  // Row 2 (top main row) with outer borders
+  { chordId: 'Bdim', variant: 'border', orientation: 'vertical', row: 2, column: 1 },
+  { chordId: 'C', variant: 'main', row: 2, column: 2 },
+  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 2, column: 3 },
+  { chordId: 'Dm', variant: 'main', row: 2, column: 4 },
+  { chordId: 'D#dim', variant: 'border', orientation: 'vertical', row: 2, column: 5 },
+  { chordId: 'Em', variant: 'main', row: 2, column: 6 },
+  { chordId: 'Edim', variant: 'border', orientation: 'vertical', row: 2, column: 7 },
+  // Row 3 (first inner horizontal row)
+  { chordId: null, variant: 'spacer', row: 3, column: 1 },
+  { chordId: 'C7', variant: 'border', orientation: 'horizontal', row: 3, column: 2 },
+  { chordId: null, variant: 'spacer', row: 3, column: 3 },
+  { chordId: 'D7', variant: 'border', orientation: 'horizontal', row: 3, column: 4 },
+  { chordId: null, variant: 'spacer', row: 3, column: 5 },
+  { chordId: 'E7', variant: 'border', orientation: 'horizontal', row: 3, column: 6 },
+  { chordId: null, variant: 'spacer', row: 3, column: 7 },
+  // Row 4 (middle main row)
+  { chordId: 'Edim', variant: 'border', orientation: 'vertical', row: 4, column: 1 },
+  { chordId: 'F', variant: 'main', row: 4, column: 2 },
+  { chordId: 'F#dim', variant: 'border', orientation: 'vertical', row: 4, column: 3 },
+  { chordId: 'G', variant: 'main', row: 4, column: 4 },
+  { chordId: 'G#dim', variant: 'border', orientation: 'vertical', row: 4, column: 5 },
+  { chordId: 'Am', variant: 'main', row: 4, column: 6 },
+  { chordId: 'Adim', variant: 'border', orientation: 'vertical', row: 4, column: 7 },
+  // Row 5 (second inner horizontal row)
+  { chordId: null, variant: 'spacer', row: 5, column: 1 },
+  { chordId: 'F7', variant: 'border', orientation: 'horizontal', row: 5, column: 2 },
+  { chordId: null, variant: 'spacer', row: 5, column: 3 },
+  { chordId: 'G7', variant: 'border', orientation: 'horizontal', row: 5, column: 4 },
+  { chordId: null, variant: 'spacer', row: 5, column: 5 },
+  { chordId: 'A7', variant: 'border', orientation: 'horizontal', row: 5, column: 6 },
+  { chordId: null, variant: 'spacer', row: 5, column: 7 },
+  // Row 6 (bottom main row)
+  { chordId: 'Adim', variant: 'border', orientation: 'vertical', row: 6, column: 1 },
+  { chordId: 'Bb', variant: 'main', row: 6, column: 2 },
+  { chordId: 'Bdim', variant: 'border', orientation: 'vertical', row: 6, column: 3 },
+  { chordId: 'C', variant: 'main', row: 6, column: 4 },
+  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 6, column: 5 },
+  { type: 'modifier-grid', row: 6, column: 6 },
+  { chordId: null, variant: 'spacer', row: 6, column: 7 },
+  // Bottom outer row
+  { chordId: null, variant: 'spacer', row: 7, column: 1 },
+  { chordId: 'Bb7', variant: 'border', orientation: 'horizontal', row: 7, column: 2 },
+  { chordId: null, variant: 'spacer', row: 7, column: 3 },
+  { chordId: 'C7', variant: 'border', orientation: 'horizontal', row: 7, column: 4 },
+  { chordId: null, variant: 'spacer', row: 7, column: 5 },
+  { chordId: null, variant: 'spacer', row: 7, column: 6 },
+  { chordId: null, variant: 'spacer', row: 7, column: 7 }
 ];
 
 const TYPE_GRID_LAYOUT = [
@@ -145,7 +176,7 @@ TILE_LAYOUT.forEach((tile) => {
     button: btn,
     chordId: tile.chordId,
     defaultLabel: btn.textContent,
-    allowModifiers: chord.allowModifiers !== false
+    allowModifiers: chord.allowModifiers === true
   });
 });
 
@@ -422,7 +453,11 @@ function applyLabelOverride(typeId) {
       return;
     }
     const chord = getChord(chordId);
-    const baseSuffix = chord?.chordType ? TYPE_META.get(chord.chordType)?.suffix ?? '' : '';
+    if (!chord) {
+      button.textContent = defaultLabel;
+      return;
+    }
+    const baseSuffix = chord.chordType ? TYPE_META.get(chord.chordType)?.suffix ?? '' : '';
     const overrideSuffix = activeType.suffix ?? '';
     let rootLabel = defaultLabel;
     if (baseSuffix && rootLabel.endsWith(baseSuffix)) {

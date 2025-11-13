@@ -56,9 +56,9 @@ export const CHORD_TYPES = [
   { id: 'm', label: 'm', intervals: [0, 3, 7], suffix: 'm' },
   { id: 'm7', label: 'm7', intervals: [0, 3, 7, 10], suffix: 'm7' },
   { id: 'mMaj7', label: 'm(maj7)', intervals: [0, 3, 7, 11], suffix: 'm(maj7)' },
-  { id: 'dim', label: 'dim', intervals: [0, 3, 6], suffix: 'dim' },
+  { id: 'dim', label: 'dim', intervals: [0, 3, 6], suffix: '°' },
   { id: 'm7b5', label: 'm7b5', intervals: [0, 3, 6, 10], suffix: 'm7b5' },
-  { id: 'dim7', label: 'dim7', intervals: [0, 3, 6, 9], suffix: 'dim7' },
+  { id: 'dim7', label: 'dim7', intervals: [0, 3, 6, 9], suffix: '°7' },
   { id: 'sus4', label: 'sus4', intervals: [0, 5, 7], suffix: 'sus4' },
   { id: '7sus4', label: '7sus4', intervals: [0, 5, 7, 10], suffix: '7sus4' },
   { id: '11', label: '11', intervals: [0, 4, 7, 10, 17], suffix: '11' }
@@ -68,24 +68,27 @@ const CHORD_TYPE_MAP = new Map(CHORD_TYPES.map((type) => [type.id, type]));
 
 export const CHORDS = [
   { id: 'C', label: 'I', tones: ['C', 'E', 'G'], root: 'C', chordType: 'major', allowModifiers: true },
-  { id: 'Dm', label: 'IIm', tones: ['D', 'F', 'A'], root: 'D', chordType: 'm', allowModifiers: true },
-  { id: 'Em', label: 'IIIm', tones: ['E', 'G', 'B'], root: 'E', chordType: 'm', allowModifiers: true },
+  { id: 'Dm', label: 'ii', tones: ['D', 'F', 'A'], root: 'D', chordType: 'm', allowModifiers: true },
+  { id: 'Em', label: 'iii', tones: ['E', 'G', 'B'], root: 'E', chordType: 'm', allowModifiers: true },
   { id: 'F', label: 'IV', tones: ['F', 'A', 'C'], root: 'F', chordType: 'major', allowModifiers: true },
   { id: 'G', label: 'V', tones: ['G', 'B', 'D'], root: 'G', chordType: 'major', allowModifiers: true },
-  { id: 'Am', label: 'VIm', tones: ['A', 'C', 'E'], root: 'A', chordType: 'm', allowModifiers: true },
+  { id: 'Am', label: 'vi', tones: ['A', 'C', 'E'], root: 'A', chordType: 'm', allowModifiers: true },
   { id: 'Bb', label: 'bVII', tones: ['Bb', 'D', 'F'], root: 'Bb', chordType: 'major', allowModifiers: true },
-  { id: 'C#dim', label: '#I°', tones: ['C#', 'E', 'G'], root: 'C#', chordType: 'dim' },
-  { id: 'D#dim', label: '#II°', tones: ['D#', 'F#', 'A'], root: 'D#', chordType: 'dim' },
-  { id: 'F#dim', label: '#IV°', tones: ['F#', 'A', 'C'], root: 'F#', chordType: 'dim' },
-  { id: 'G#dim', label: 'V#°', tones: ['G#', 'B', 'D'], root: 'G#', chordType: 'dim' },
-  { id: 'Bdim', label: 'VII°', tones: ['B', 'D', 'F'], root: 'B', chordType: 'dim' },
+  { id: 'C#dim', label: '#i°', tones: ['C#', 'E', 'G'], root: 'C#', chordType: 'dim' },
+  { id: 'D#dim', label: '#ii°', tones: ['D#', 'F#', 'A'], root: 'D#', chordType: 'dim' },
+  { id: 'F#dim', label: '#iv°', tones: ['F#', 'A', 'C'], root: 'F#', chordType: 'dim' },
+  { id: 'G#dim', label: '#v°', tones: ['G#', 'B', 'D'], root: 'G#', chordType: 'dim' },
+  { id: 'Bdim', label: 'vii°', tones: ['B', 'D', 'F'], root: 'B', chordType: 'dim' },
   { id: 'C7', label: 'I7', tones: ['C', 'E', 'G', 'Bb'], root: 'C', chordType: '7' },
   { id: 'D7', label: 'II7', tones: ['D', 'F#', 'A', 'C'], root: 'D', chordType: '7' },
   { id: 'E7', label: 'III7', tones: ['E', 'G#', 'B', 'D'], root: 'E', chordType: '7' },
   { id: 'F7', label: 'IV7', tones: ['F', 'A', 'C', 'Eb'], root: 'F', chordType: '7' },
   { id: 'G7', label: 'V7', tones: ['G', 'B', 'D', 'F'], root: 'G', chordType: '7' },
   { id: 'A7', label: 'VI7', tones: ['A', 'C#', 'E', 'G'], root: 'A', chordType: '7' },
-  { id: 'B7', label: 'VII7', tones: ['B', 'D#', 'F#', 'A'], root: 'B', chordType: '7' }
+  { id: 'B7', label: 'VII7', tones: ['B', 'D#', 'F#', 'A'], root: 'B', chordType: '7' },
+  { id: 'Edim', label: 'iii°', tones: ['E', 'G', 'Bb'], root: 'E', chordType: 'dim' },
+  { id: 'Adim', label: 'vi°', tones: ['A', 'C', 'Eb'], root: 'A', chordType: 'dim' },
+  { id: 'Bb7', label: 'bVII7', tones: ['Bb', 'D', 'F', 'Ab'], root: 'Bb', chordType: '7' }
 ];
 
 const DEFAULT_ROOT_OCTAVE = 3;
