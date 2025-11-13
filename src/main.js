@@ -2,6 +2,54 @@ import { getChord, voiceChord, ensureChordVariant, CHORD_TYPES } from './chords.
 import { AudioEngine } from './audio-engine.js';
 
 const gridEl = document.getElementById('chord-grid');
+
+const responsiveTiles = new Set();
+const TILE_FONT_CONFIG = {
+  ratio: 0.28,
+  min: 14,
+  max: 40
+};
+const tileFontObserver = typeof ResizeObserver !== 'undefined'
+  ? new ResizeObserver((entries) => {
+      entries.forEach(({ target, contentRect }) => {
+        applyTileFontSize(target, contentRect);
+      });
+    })
+  : null;
+
+function applyTileFontSize(element, rect = null) {
+  if (!element) {
+    return;
+  }
+  const width = rect?.width ?? element.offsetWidth;
+  const height = rect?.height ?? element.offsetHeight;
+  const size = Math.min(width, height);
+  if (!size) {
+    return;
+  }
+  const targetSize = Math.max(
+    TILE_FONT_CONFIG.min,
+    Math.min(TILE_FONT_CONFIG.max, size * TILE_FONT_CONFIG.ratio)
+  );
+  element.style.fontSize = `${targetSize}px`;
+}
+
+function registerResponsiveTile(element) {
+  if (!element || responsiveTiles.has(element)) {
+    return;
+  }
+  responsiveTiles.add(element);
+  applyTileFontSize(element);
+  if (tileFontObserver) {
+    tileFontObserver.observe(element);
+  }
+}
+
+if (!tileFontObserver) {
+  window.addEventListener('resize', () => {
+    responsiveTiles.forEach((tile) => applyTileFontSize(tile));
+  });
+}
 const engine = new AudioEngine();
 engine.setVolume(0.5);
 const pointerChord = new Map();
@@ -20,84 +68,43 @@ const TYPE_META = new Map();
 CHORD_TYPES.forEach((type) => TYPE_META.set(type.id, type));
 
 const TILE_LAYOUT = [
-  // Top outer row
-  { chordId: null, variant: 'spacer', row: 1, column: 1 },
-  { chordId: 'G7', variant: 'border', orientation: 'horizontal', row: 1, column: 2 },
-  { chordId: null, variant: 'spacer', row: 1, column: 3 },
-  { chordId: 'A7', variant: 'border', orientation: 'horizontal', row: 1, column: 4 },
-  { chordId: null, variant: 'spacer', row: 1, column: 5 },
-  { chordId: 'B7', variant: 'border', orientation: 'horizontal', row: 1, column: 6 },
-  { chordId: null, variant: 'spacer', row: 1, column: 7 },
-  // Row 2 (top main row) with outer borders
-  { chordId: 'Bdim', variant: 'border', orientation: 'vertical', row: 2, column: 1 },
-  { chordId: 'C', variant: 'main', row: 2, column: 2 },
-  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 2, column: 3 },
-  { chordId: 'Dm', variant: 'main', row: 2, column: 4 },
-  { chordId: 'D#dim', variant: 'border', orientation: 'vertical', row: 2, column: 5 },
-  { chordId: 'Em', variant: 'main', row: 2, column: 6 },
-  { chordId: 'Edim', variant: 'border', orientation: 'vertical', row: 2, column: 7 },
-  // Row 3 (first inner horizontal row)
-  { chordId: null, variant: 'spacer', row: 3, column: 1 },
-  { chordId: 'C7', variant: 'border', orientation: 'horizontal', row: 3, column: 2 },
-  { chordId: null, variant: 'spacer', row: 3, column: 3 },
-  { chordId: 'D7', variant: 'border', orientation: 'horizontal', row: 3, column: 4 },
-  { chordId: null, variant: 'spacer', row: 3, column: 5 },
-  { chordId: 'E7', variant: 'border', orientation: 'horizontal', row: 3, column: 6 },
-  { chordId: null, variant: 'spacer', row: 3, column: 7 },
-  // Row 4 (middle main row)
-  { chordId: 'Edim', variant: 'border', orientation: 'vertical', row: 4, column: 1 },
-  { chordId: 'F', variant: 'main', row: 4, column: 2 },
-  { chordId: 'F#dim', variant: 'border', orientation: 'vertical', row: 4, column: 3 },
-  { chordId: 'G', variant: 'main', row: 4, column: 4 },
-  { chordId: 'G#dim', variant: 'border', orientation: 'vertical', row: 4, column: 5 },
-  { chordId: 'Am', variant: 'main', row: 4, column: 6 },
-  { chordId: 'Adim', variant: 'border', orientation: 'vertical', row: 4, column: 7 },
-  // Row 5 (second inner horizontal row)
-  { chordId: null, variant: 'spacer', row: 5, column: 1 },
-  { chordId: 'F7', variant: 'border', orientation: 'horizontal', row: 5, column: 2 },
-  { chordId: null, variant: 'spacer', row: 5, column: 3 },
-  { chordId: 'G7', variant: 'border', orientation: 'horizontal', row: 5, column: 4 },
-  { chordId: null, variant: 'spacer', row: 5, column: 5 },
-  { chordId: 'A7', variant: 'border', orientation: 'horizontal', row: 5, column: 6 },
-  { chordId: null, variant: 'spacer', row: 5, column: 7 },
-  // Row 6 (bottom main row)
-  { chordId: 'Adim', variant: 'border', orientation: 'vertical', row: 6, column: 1 },
-  { chordId: 'Bb', variant: 'main', row: 6, column: 2 },
-  { chordId: 'Bdim', variant: 'border', orientation: 'vertical', row: 6, column: 3 },
-  { chordId: 'C', variant: 'main', row: 6, column: 4 },
-  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 6, column: 5 },
-  { type: 'modifier-grid', row: 6, column: 6 },
-  { chordId: null, variant: 'spacer', row: 6, column: 7 },
-  // Bottom outer row
-  { chordId: null, variant: 'spacer', row: 7, column: 1 },
-  { chordId: 'Bb7', variant: 'border', orientation: 'horizontal', row: 7, column: 2 },
-  { chordId: null, variant: 'spacer', row: 7, column: 3 },
-  { chordId: 'C7', variant: 'border', orientation: 'horizontal', row: 7, column: 4 },
-  { chordId: null, variant: 'spacer', row: 7, column: 5 },
-  { chordId: null, variant: 'spacer', row: 7, column: 6 },
-  { chordId: null, variant: 'spacer', row: 7, column: 7 }
+  { chordId: 'C', variant: 'main', row: 1, column: 1 },
+  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 1, column: 2 },
+  { chordId: 'Dm', variant: 'main', row: 1, column: 3 },
+  { chordId: 'D#dim', variant: 'border', orientation: 'vertical', row: 1, column: 4 },
+  { chordId: 'Em', variant: 'main', row: 1, column: 5 },
+  { chordId: 'C7', variant: 'border', orientation: 'horizontal', row: 2, column: 1 },
+  { chordId: null, variant: 'border', row: 2, column: 2 },
+  { chordId: 'D7', variant: 'border', orientation: 'horizontal', row: 2, column: 3 },
+  { chordId: null, variant: 'border', row: 2, column: 4 },
+  { chordId: 'E7', variant: 'border', orientation: 'horizontal', row: 2, column: 5 },
+  { chordId: 'F', variant: 'main', row: 3, column: 1 },
+  { chordId: 'F#dim', variant: 'border', orientation: 'vertical', row: 3, column: 2 },
+  { chordId: 'G', variant: 'main', row: 3, column: 3 },
+  { chordId: 'G#dim', variant: 'border', orientation: 'vertical', row: 3, column: 4 },
+  { chordId: 'Am', variant: 'main', row: 3, column: 5 },
+  { chordId: 'F7', variant: 'border', orientation: 'horizontal', row: 4, column: 1 },
+  { chordId: null, variant: 'border', row: 4, column: 2 },
+  { chordId: 'G7', variant: 'border', orientation: 'horizontal', row: 4, column: 3 },
+  { chordId: null, variant: 'border', row: 4, column: 4 },
+  { chordId: 'A7', variant: 'border', orientation: 'horizontal', row: 4, column: 5 },
+  { chordId: 'Bb', variant: 'main', row: 5, column: 1 },
+  { chordId: 'Bdim', variant: 'border', orientation: 'vertical', row: 5, column: 2 },
+  { chordId: 'C', variant: 'main', row: 5, column: 3 },
+  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 5, column: 4 },
+  { type: 'modifier-grid', row: 5, column: 5 }
 ];
 
 const TYPE_GRID_LAYOUT = [
-  ['major', '7', 'maj7'],
-  ['m', 'm7', 'mMaj7'],
-  ['dim', 'm7b5', 'dim7'],
-  ['sus4', '7sus4', '11']
+  ['major', 'm'],
+  ['7', 'dim']
 ];
 
 const KEY_TYPE_SEQUENCE = [
-  { key: '1', type: 'major' },
-  { key: '2', type: '7' },
-  { key: '3', type: 'maj7' },
-  { key: 'q', type: 'm' },
-  { key: 'w', type: 'm7' },
-  { key: 'e', type: 'mMaj7' },
-  { key: 'a', type: 'dim' },
-  { key: 's', type: 'm7b5' },
-  { key: 'd', type: 'dim7' },
-  { key: 'z', type: 'sus4' },
-  { key: 'x', type: '7sus4' },
-  { key: 'c', type: '11' }
+  { key: 'shift', type: 'major' },
+  { key: 'm', type: 'm' },
+  { key: '7', type: '7' },
+  { key: 'd', type: 'dim' }
 ];
 
 const KEY_TYPE_MAP = new Map(KEY_TYPE_SEQUENCE.map(({ key, type }) => [key, type]));
@@ -122,17 +129,20 @@ TILE_LAYOUT.forEach((tile) => {
         if (!type) {
           return;
         }
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'type-button';
+        const btn = document.createElement('div');
+        btn.className = 'tile type-button';
+        btn.tabIndex = 0;
+        btn.setAttribute('role', 'button');
         btn.textContent = type.label;
         btn.dataset.type = type.id;
-        btn.setAttribute('aria-label', `Hold to apply ${type.label} chord`);
+        const description = type.description || type.label;
+        btn.setAttribute('aria-label', `Hold to apply ${description} chord`);
         btn.addEventListener('pointerdown', (event) => handleTypePointerDown(event, type.id, btn));
         btn.addEventListener('pointerup', (event) => handleTypePointerEnd(event));
         btn.addEventListener('pointerleave', (event) => handleTypePointerEnd(event));
         btn.addEventListener('pointercancel', (event) => handleTypePointerEnd(event));
         grid.appendChild(btn);
+        registerResponsiveTile(btn);
         typeButtons.set(type.id, btn);
       });
     });
@@ -141,7 +151,7 @@ TILE_LAYOUT.forEach((tile) => {
   }
   if (!tile.chordId) {
     const filler = document.createElement('div');
-    filler.className = 'spacer';
+    filler.className = 'tile spacer';
     filler.dataset.variant = tile.variant ?? 'border';
     filler.style.gridRow = tile.row;
     filler.style.gridColumn = tile.column;
@@ -155,9 +165,10 @@ TILE_LAYOUT.forEach((tile) => {
     console.warn(`Skipping unknown chord ${tile.chordId}`);
     return;
   }
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'chord';
+  const btn = document.createElement('div');
+  btn.className = 'tile chord';
+  btn.tabIndex = 0;
+  btn.setAttribute('role', 'button');
   btn.textContent = tile.label ?? chord.label;
   btn.dataset.chord = tile.chordId;
   btn.dataset.variant = tile.variant;
@@ -171,6 +182,7 @@ TILE_LAYOUT.forEach((tile) => {
   btn.addEventListener('pointercancel', (event) => handlePointerEnd(event));
   btn.addEventListener('keydown', (event) => handleKeyDown(event, tile.chordId, btn));
   btn.addEventListener('keyup', (event) => handleKeyUp(event, tile.chordId, btn));
+  registerResponsiveTile(btn);
   gridEl.appendChild(btn);
   chordButtons.push({
     button: btn,
@@ -180,7 +192,6 @@ TILE_LAYOUT.forEach((tile) => {
   });
 });
 
-applyLabelOverride(null);
 setActiveType(null);
 
 async function handlePointerDown(event, chordId, button) {
@@ -227,7 +238,7 @@ function handleChordPointerMove(event) {
   const entry = pointerChord.get(event.pointerId);
   const currentChordId = entry?.resolvedId || null;
   const currentButton = entry?.button || null;
-  const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('button.chord');
+  const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('.tile.chord');
   const nextChordId = targetButton?.dataset.chord || null;
   if (nextChordId && nextChordId === entry?.baseChordId) {
     return;
@@ -254,7 +265,7 @@ function handleTypePointerMove(event) {
   }
   const currentTypeId = entry.typeId;
   const currentButton = entry.button;
-  const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('button.type-button');
+  const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('.type-button');
   const nextTypeId = targetButton?.dataset.type || null;
   if (nextTypeId === currentTypeId) {
     return;
@@ -439,32 +450,9 @@ function updateOverrideState() {
   const override = getActiveTouchOverride() ?? getActiveKeyboardOverride() ?? null;
   if (override !== manualOverrideType) {
     manualOverrideType = override;
-    applyLabelOverride(manualOverrideType);
     refreshActiveChordVoicing();
   }
   setActiveType(manualOverrideType);
-}
-
-function applyLabelOverride(typeId) {
-  const activeType = typeId ? TYPE_META.get(typeId) : null;
-  chordButtons.forEach(({ button, defaultLabel, allowModifiers, chordId }) => {
-    if (!allowModifiers || !activeType) {
-      button.textContent = defaultLabel;
-      return;
-    }
-    const chord = getChord(chordId);
-    if (!chord) {
-      button.textContent = defaultLabel;
-      return;
-    }
-    const baseSuffix = chord.chordType ? TYPE_META.get(chord.chordType)?.suffix ?? '' : '';
-    const overrideSuffix = activeType.suffix ?? '';
-    let rootLabel = defaultLabel;
-    if (baseSuffix && rootLabel.endsWith(baseSuffix)) {
-      rootLabel = rootLabel.slice(0, -baseSuffix.length);
-    }
-    button.textContent = `${rootLabel}${overrideSuffix}`;
-  });
 }
 
 function refreshActiveChordVoicing() {
