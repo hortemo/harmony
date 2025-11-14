@@ -53,7 +53,11 @@ export const CHORD_TYPES = [
   { id: 'major', label: 'M', description: 'major', intervals: [0, 4, 7], suffix: '' },
   { id: 'm', label: 'm', description: 'minor', intervals: [0, 3, 7], suffix: 'm' },
   { id: '7', label: '7', description: 'dominant', intervals: [0, 4, 7, 10], suffix: '7' },
-  { id: 'dim', label: '°', description: 'diminished', intervals: [0, 3, 6], suffix: '°' }
+  { id: 'dim', label: '°', description: 'diminished', intervals: [0, 3, 6], suffix: '°' },
+  { id: 'maj7', label: 'M7', description: 'major seventh', intervals: [0, 4, 7, 11], suffix: 'maj7' },
+  { id: 'm7', label: 'm7', description: 'minor seventh', intervals: [0, 3, 7, 10], suffix: 'm7' },
+  { id: '7sus4', label: '7sus4', description: 'dominant suspended fourth', intervals: [0, 5, 7, 10], suffix: '7sus4' },
+  { id: 'dim7', label: '°7', description: 'diminished seventh', intervals: [0, 3, 6, 9], suffix: 'dim7' }
 ];
 
 const CHORD_TYPE_MAP = new Map(CHORD_TYPES.map((type) => [type.id, type]));

@@ -76,6 +76,14 @@ let activeButton = null;
 let activeTypeButton = null;
 let manualOverrideType = null;
 let keyboardKeyOrder = 0;
+const CONTEXTUAL_TYPE_TARGETS = new Map([
+  ['major', 'maj7'],
+  ['m', 'm7'],
+  ['7', '7sus4'],
+  ['dim', 'dim7']
+]);
+const typeControlTargets = new Map();
+let activeChordBaseType = null;
 
 const TYPE_META = new Map();
 CHORD_TYPES.forEach((type) => TYPE_META.set(type.id, type));
@@ -157,6 +165,7 @@ TILE_LAYOUT.forEach((tile) => {
         grid.appendChild(btn);
         registerResponsiveTile(btn);
         typeButtons.set(type.id, btn);
+        typeControlTargets.set(type.id, type.id);
       });
     });
     gridEl.appendChild(grid);
@@ -206,6 +215,7 @@ TILE_LAYOUT.forEach((tile) => {
 });
 
 setActiveType(null);
+applyTypeControlContext(null);
 
 async function handlePointerDown(event, chordId, button) {
   event.preventDefault();
@@ -215,7 +225,7 @@ async function handlePointerDown(event, chordId, button) {
   button?.setPointerCapture(event.pointerId);
   try {
     await engine.ensureStarted();
-    playChord(selection.chordId, 'pointer', button);
+    playChord(selection, 'pointer', button);
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
@@ -268,7 +278,7 @@ function handleChordPointerMove(event) {
   }
   const selection = resolveChordSelection(nextChordId);
   pointerChord.set(event.pointerId, { resolvedId: selection.chordId, baseChordId: nextChordId, button: targetButton });
-  playChord(selection.chordId, 'pointer', targetButton);
+  playChord(selection, 'pointer', targetButton);
 }
 
 function handleTypePointerMove(event) {
@@ -276,29 +286,31 @@ function handleTypePointerMove(event) {
   if (!entry || entry.pointerType !== 'touch') {
     return;
   }
-  const currentTypeId = entry.typeId;
+  const currentControlId = entry.controlId;
   const currentButton = entry.button;
   const targetButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('.type-button');
-  const nextTypeId = targetButton?.dataset.type || null;
-  if (nextTypeId === currentTypeId) {
+  const nextControlId = targetButton?.dataset.type || null;
+  if (nextControlId === currentControlId) {
     return;
   }
-  if (currentTypeId) {
-    setTypeHeld(currentTypeId, false);
+  if (currentControlId) {
+    setTypeHeld(currentControlId, false);
   }
   if (currentButton && currentButton !== targetButton && currentButton.releasePointerCapture) {
     currentButton.releasePointerCapture(event.pointerId);
   }
-  if (!nextTypeId) {
-    entry.typeId = null;
+  if (!nextControlId) {
+    entry.controlId = null;
+    entry.targetTypeId = null;
     entry.button = null;
     updateOverrideState();
     return;
   }
-  entry.typeId = nextTypeId;
+  entry.controlId = nextControlId;
+  entry.targetTypeId = getControlTargetType(nextControlId);
   entry.button = targetButton;
   targetButton?.setPointerCapture(event.pointerId);
-  setTypeHeld(nextTypeId, true);
+  setTypeHeld(nextControlId, true);
   updateOverrideState();
 }
 
@@ -311,8 +323,8 @@ function handleKeyDown(event, chordId, button) {
     return;
   }
   const selection = resolveChordSelection(chordId);
-  latchedChord = { baseId: chordId, resolvedId: selection.chordId, button };
-  engine.ensureStarted().then(() => playChord(selection.chordId, 'keyboard', button));
+  latchedChord = { baseId: chordId, resolvedId: selection.chordId, button, baseTypeId: selection.baseTypeId || null };
+  engine.ensureStarted().then(() => playChord(selection, 'keyboard', button));
 }
 
 function handleKeyUp(event, chordId, button) {
@@ -326,7 +338,12 @@ function handleKeyUp(event, chordId, button) {
   latchedChord = null;
 }
 
-function playChord(chordId, source = 'pointer', button = null) {
+function playChord(selection, source = 'pointer', button = null) {
+  const target = typeof selection === 'string' ? { chordId: selection } : selection || {};
+  const chordId = target?.chordId;
+  if (!chordId) {
+    return;
+  }
   try {
     const freqs = voiceChord(chordId);
     engine.playChord(chordId, freqs);
@@ -344,6 +361,8 @@ function playChord(chordId, source = 'pointer', button = null) {
       activeButton = null;
     }
     const chordMeta = getChord(chordId);
+    const baseTypeForContext = target.baseTypeId ?? chordMeta?.baseTypeId ?? chordMeta?.chordType ?? null;
+    applyTypeControlContext(baseTypeForContext);
     setActiveType(manualOverrideType);
     updateStatus(`Playing ${chordMeta?.label || chordId}`);
   } catch (err) {
@@ -367,6 +386,7 @@ function stopChord(chordId, options = {}) {
   }
   if (!engine.currentChordId) {
     setActiveType(manualOverrideType);
+    applyTypeControlContext(null);
   }
   if (!options.keepPointer) {
     activePointerId = null;
@@ -385,27 +405,39 @@ function updateStatus() {}
 function resolveChordSelection(chordId) {
   const chord = getChord(chordId);
   if (!chord) {
-    return { chordId, typeId: null };
+    return { chordId, typeId: null, baseChordId: chordId, baseTypeId: null };
   }
+  const baseTypeId = chord.chordType || null;
   if (chord.allowModifiers && manualOverrideType) {
     try {
       const variant = ensureChordVariant(chord.id, manualOverrideType);
-      return { chordId: variant.id, typeId: variant.chordType || null };
+      return {
+        chordId: variant.id,
+        typeId: variant.chordType || null,
+        baseChordId: chord.id,
+        baseTypeId
+      };
     } catch (err) {
       console.warn(err);
     }
   }
-  return { chordId: chord.id, typeId: chord.chordType || null };
+  return {
+    chordId: chord.id,
+    typeId: chord.chordType || null,
+    baseChordId: chord.id,
+    baseTypeId
+  };
 }
 
-function handleTypePointerDown(event, typeId, button) {
+function handleTypePointerDown(event, controlId, button) {
   event.preventDefault();
   if (event.pointerType !== 'touch') {
     return;
   }
-  typePointerState.set(event.pointerId, { typeId, button, pointerType: 'touch' });
+  const targetTypeId = getControlTargetType(controlId);
+  typePointerState.set(event.pointerId, { controlId, targetTypeId, button, pointerType: 'touch' });
   button?.setPointerCapture(event.pointerId);
-  setTypeHeld(typeId, true);
+  setTypeHeld(controlId, true);
   updateOverrideState();
 }
 
@@ -421,8 +453,8 @@ function handleTypePointerEnd(event) {
     entry.button.releasePointerCapture(event.pointerId);
   }
   typePointerState.delete(event.pointerId);
-  if (entry.typeId) {
-    setTypeHeld(entry.typeId, false);
+  if (entry.controlId) {
+    setTypeHeld(entry.controlId, false);
   }
   updateOverrideState();
 }
@@ -431,32 +463,86 @@ function getActiveTouchOverride() {
   const entries = [];
   typePointerState.forEach((value) => entries.push(value));
   for (let i = entries.length - 1; i >= 0; i -= 1) {
-    if (entries[i].pointerType === 'touch' && entries[i].typeId) {
-      return entries[i].typeId;
+    if (entries[i].pointerType === 'touch' && entries[i].targetTypeId) {
+      return entries[i].targetTypeId;
     }
   }
   return null;
 }
 
-function setTypeHeld(typeId, state) {
-  const button = typeButtons.get(typeId);
+function setTypeHeld(controlId, state) {
+  const button = typeButtons.get(controlId);
   if (button) {
     button.dataset.held = state ? 'true' : 'false';
   }
 }
 
 function setActiveType(typeId) {
-  if (activeTypeButton && (!typeId || typeButtons.get(typeId) !== activeTypeButton)) {
+  const nextButton = getButtonForType(typeId);
+  if (activeTypeButton && activeTypeButton !== nextButton) {
     activeTypeButton.dataset.active = 'false';
     activeTypeButton = null;
   }
-  if (typeId) {
-    const button = typeButtons.get(typeId);
-    if (button) {
-      button.dataset.active = 'true';
-      activeTypeButton = button;
+  if (nextButton && nextButton !== activeTypeButton) {
+    nextButton.dataset.active = 'true';
+    activeTypeButton = nextButton;
+  }
+}
+
+function getButtonForType(typeId) {
+  if (!typeId) {
+    return null;
+  }
+  const direct = typeButtons.get(typeId);
+  if (direct) {
+    return direct;
+  }
+  for (const [controlId, targetTypeId] of typeControlTargets.entries()) {
+    if (targetTypeId === typeId) {
+      return typeButtons.get(controlId) || null;
     }
   }
+  return null;
+}
+
+function getControlTargetType(controlId) {
+  return typeControlTargets.get(controlId) || controlId;
+}
+
+function applyTypeControlContext(baseTypeId) {
+  if (activeChordBaseType === baseTypeId) {
+    return;
+  }
+  activeChordBaseType = baseTypeId || null;
+  typeButtons.forEach((button, controlId) => {
+    const nextTarget = resolveControlTarget(controlId, baseTypeId);
+    typeControlTargets.set(controlId, nextTarget);
+    updateTypeButtonVisual(controlId, nextTarget);
+  });
+}
+
+function resolveControlTarget(controlId, baseTypeId) {
+  if (baseTypeId && controlId === baseTypeId) {
+    const contextualTarget = CONTEXTUAL_TYPE_TARGETS.get(controlId);
+    if (contextualTarget && TYPE_META.has(contextualTarget)) {
+      return contextualTarget;
+    }
+  }
+  return controlId;
+}
+
+function updateTypeButtonVisual(controlId, targetTypeId) {
+  const button = typeButtons.get(controlId);
+  if (!button) {
+    return;
+  }
+  const targetMeta = TYPE_META.get(targetTypeId) || TYPE_META.get(controlId);
+  const label = targetMeta?.label || targetTypeId;
+  if (button.textContent !== label) {
+    button.textContent = label;
+  }
+  const description = targetMeta?.description || label;
+  button.setAttribute('aria-label', `Hold to apply ${description} chord`);
 }
 
 function updateOverrideState() {
@@ -478,14 +564,14 @@ function refreshActiveChordVoicing() {
       return;
     }
     stopChord(entry.resolvedId, { button: entry.button, keepPointer: true, silent: true });
-    playChord(selection.chordId, 'pointer', entry.button);
+    playChord(selection, 'pointer', entry.button);
     pointerChord.set(pointerId, { ...entry, resolvedId: selection.chordId });
   });
   if (latchedChord?.baseId) {
     const selection = resolveChordSelection(latchedChord.baseId);
     if (selection.chordId !== latchedChord.resolvedId) {
       stopChord(latchedChord.resolvedId, { button: latchedChord.button, silent: true });
-      playChord(selection.chordId, 'keyboard', latchedChord.button);
+      playChord(selection, 'keyboard', latchedChord.button);
       latchedChord.resolvedId = selection.chordId;
     }
   }
@@ -540,8 +626,8 @@ function getActiveKeyboardOverride() {
 
 function handleTypeKeyDown(event) {
   const key = event.key?.toLowerCase();
-  const typeId = KEY_TYPE_MAP.get(key);
-  if (!typeId) {
+  const controlId = KEY_TYPE_MAP.get(key);
+  if (!controlId) {
     return;
   }
   if (keyboardActiveKeys.has(key)) {
@@ -550,7 +636,8 @@ function handleTypeKeyDown(event) {
   }
   event.preventDefault();
   keyboardKeyOrder += 1;
-  keyboardActiveKeys.set(key, { typeId, order: keyboardKeyOrder });
+  const targetTypeId = getControlTargetType(controlId);
+  keyboardActiveKeys.set(key, { typeId: targetTypeId, controlId, order: keyboardKeyOrder });
   updateOverrideState();
 }
 
