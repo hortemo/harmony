@@ -57,7 +57,15 @@ export const CHORD_TYPES = [
   { id: 'maj7', label: 'M7', description: 'major seventh', intervals: [0, 4, 7, 11], suffix: 'maj7' },
   { id: 'm7', label: 'm7', description: 'minor seventh', intervals: [0, 3, 7, 10], suffix: 'm7' },
   { id: '7sus4', label: '7sus4', description: 'dominant suspended fourth', intervals: [0, 5, 7, 10], suffix: '7sus4' },
-  { id: 'dim7', label: '°7', description: 'diminished seventh', intervals: [0, 3, 6, 9], suffix: 'dim7' }
+  { id: 'dim7', label: '°7', description: 'diminished seventh', intervals: [0, 3, 6, 9], suffix: 'dim7' },
+  { id: 'sus2', label: 'sus2', description: 'suspended second', intervals: [0, 2, 7], suffix: 'sus2' },
+  { id: 'aug', label: '+', description: 'augmented', intervals: [0, 4, 8], suffix: '+' },
+  { id: '6', label: '6', description: 'major sixth', intervals: [0, 4, 7, 9], suffix: '6' },
+  { id: 'm6', label: 'm6', description: 'minor sixth', intervals: [0, 3, 7, 9], suffix: 'm6' },
+  { id: 'm7b5', label: 'ø', description: 'half-diminished', intervals: [0, 3, 6, 10], suffix: 'ø' },
+  { id: '9', label: '9', description: 'dominant ninth', intervals: [0, 4, 7, 10, 14], suffix: '9' },
+  { id: 'm9', label: 'm9', description: 'minor ninth', intervals: [0, 3, 7, 10, 14], suffix: 'm9' },
+  { id: 'maj9', label: 'M9', description: 'major ninth', intervals: [0, 4, 7, 11, 14], suffix: 'maj9' }
 ];
 
 const CHORD_TYPE_MAP = new Map(CHORD_TYPES.map((type) => [type.id, type]));
@@ -69,6 +77,7 @@ export const CHORDS = [
   { id: 'F', label: 'IV', tones: ['F', 'A', 'C'], root: 'F', chordType: 'major', allowModifiers: true },
   { id: 'G', label: 'V', tones: ['G', 'B', 'D'], root: 'G', chordType: 'major', allowModifiers: true },
   { id: 'Am', label: 'vi', tones: ['A', 'C', 'E'], root: 'A', chordType: 'm', allowModifiers: true },
+  { id: 'Bm7b5', label: 'viiø', tones: ['B', 'D', 'F', 'A'], root: 'B', chordType: 'm7b5', allowModifiers: true },
   { id: 'Bb', label: 'bVII', tones: ['Bb', 'D', 'F'], root: 'Bb', chordType: 'major', allowModifiers: true },
   { id: 'C#dim', label: '°', tones: ['C#', 'E', 'G'], root: 'C#', chordType: 'dim', allowModifiers: true },
   { id: 'D#dim', label: '°', tones: ['D#', 'F#', 'A'], root: 'D#', chordType: 'dim', allowModifiers: true },

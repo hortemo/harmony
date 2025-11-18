@@ -1,7 +1,8 @@
 import { getChord, voiceChord, ensureChordVariant, CHORD_TYPES } from './chords.js';
 import { AudioEngine } from './audio-engine.js';
 
-const gridEl = document.getElementById('chord-grid');
+const modifierGridEl = document.getElementById('modifier-grid');
+const harmonyGridEl = document.getElementById('harmony-grid');
 
 const responsiveTiles = new Set();
 const TILE_FONT_CONFIG = {
@@ -88,37 +89,25 @@ let activeChordBaseType = null;
 const TYPE_META = new Map();
 CHORD_TYPES.forEach((type) => TYPE_META.set(type.id, type));
 
-const TILE_LAYOUT = [
-  { chordId: 'C', variant: 'main', row: 1, column: 1 },
-  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 1, column: 2 },
-  { chordId: 'Dm', variant: 'main', row: 1, column: 3 },
-  { chordId: 'D#dim', variant: 'border', orientation: 'vertical', row: 1, column: 4 },
-  { chordId: 'Em', variant: 'main', row: 1, column: 5 },
-  { chordId: 'C7', variant: 'border', orientation: 'horizontal', row: 2, column: 1 },
-  { chordId: null, variant: 'border', row: 2, column: 2 },
-  { chordId: 'D7', variant: 'border', orientation: 'horizontal', row: 2, column: 3 },
-  { chordId: null, variant: 'border', row: 2, column: 4 },
-  { chordId: 'E7', variant: 'border', orientation: 'horizontal', row: 2, column: 5 },
-  { chordId: 'F', variant: 'main', row: 3, column: 1 },
-  { chordId: 'F#dim', variant: 'border', orientation: 'vertical', row: 3, column: 2 },
-  { chordId: 'G', variant: 'main', row: 3, column: 3 },
-  { chordId: 'G#dim', variant: 'border', orientation: 'vertical', row: 3, column: 4 },
-  { chordId: 'Am', variant: 'main', row: 3, column: 5 },
-  { chordId: 'F7', variant: 'border', orientation: 'horizontal', row: 4, column: 1 },
-  { chordId: null, variant: 'border', row: 4, column: 2 },
-  { chordId: 'G7', variant: 'border', orientation: 'horizontal', row: 4, column: 3 },
-  { chordId: null, variant: 'border', row: 4, column: 4 },
-  { chordId: 'A7', variant: 'border', orientation: 'horizontal', row: 4, column: 5 },
-  { chordId: 'Bb', variant: 'main', row: 5, column: 1 },
-  { chordId: 'Bdim', variant: 'border', orientation: 'vertical', row: 5, column: 2 },
-  { chordId: 'C', variant: 'main', row: 5, column: 3 },
-  { chordId: 'C#dim', variant: 'border', orientation: 'vertical', row: 5, column: 4 },
-  { type: 'modifier-grid', row: 5, column: 5 }
+// Modifier grid layout: 4x4 grid with all chord types
+const MODIFIER_LAYOUT = [
+  ['major', 'm', '7', 'dim'],
+  ['maj7', 'm7', '7sus4', 'dim7'],
+  ['sus2', 'aug', '6', 'm6'],
+  ['m7b5', '9', 'm9', 'maj9']
 ];
 
-const TYPE_GRID_LAYOUT = [
-  ['major', 'm'],
-  ['7', 'dim']
+// Harmony grid layout: 5x5 grid with border tiles
+// Main chords: V, vi, viiø / I, ii, iii / IV, V, vi
+// Horizontal borders (dim): between main chords
+// Vertical borders (7th): dominant 7 version of chord above
+// null = spacer tile
+const HARMONY_LAYOUT = [
+  ['G', 'G#dim', 'Am', 'Bdim', 'Bm7b5'],  // Row 1: V, dim, vi, dim, viiø
+  ['G7', null, 'A7', null, 'B7'],         // Row 2: 7th chords (dominant 7 of chord above)
+  ['C', 'C#dim', 'Dm', 'D#dim', 'Em'],    // Row 3: I, dim, ii, dim, iii
+  ['C7', null, 'D7', null, 'E7'],         // Row 4: 7th chords (dominant 7 of chord above)
+  ['F', 'F#dim', 'G', 'G#dim', 'Am']      // Row 5: IV, dim, V, dim, vi
 ];
 
 const KEY_TYPE_SEQUENCE = [
@@ -130,87 +119,89 @@ const KEY_TYPE_SEQUENCE = [
 
 const KEY_TYPE_MAP = new Map(KEY_TYPE_SEQUENCE.map(({ key, type }) => [key, type]));
 
-TILE_LAYOUT.forEach((tile) => {
-  if (tile.type === 'modifier-grid') {
-    const grid = document.createElement('div');
-    grid.className = 'type-grid';
-    grid.style.gridRow = tile.row;
-    grid.style.gridColumn = tile.column;
-    grid.setAttribute('aria-label', 'Chord modifier grid');
-    TYPE_GRID_LAYOUT.forEach((row) => {
-      row.forEach((typeId) => {
-        if (!typeId) {
-          const filler = document.createElement('div');
-          filler.className = 'type-spacer';
-          filler.setAttribute('aria-hidden', 'true');
-          grid.appendChild(filler);
-          return;
-        }
-        const type = TYPE_META.get(typeId);
-        if (!type) {
-          return;
-        }
-        const btn = document.createElement('div');
-        btn.className = 'tile type-button';
-        btn.tabIndex = 0;
-        btn.setAttribute('role', 'button');
-        btn.textContent = type.label;
-        btn.dataset.type = type.id;
-        const description = type.description || type.label;
-        btn.setAttribute('aria-label', `Hold to apply ${description} chord`);
-        btn.addEventListener('pointerdown', (event) => handleTypePointerDown(event, type.id, btn));
-        btn.addEventListener('pointerup', (event) => handleTypePointerEnd(event));
-        btn.addEventListener('pointerleave', (event) => handleTypePointerEnd(event));
-        btn.addEventListener('pointercancel', (event) => handleTypePointerEnd(event));
-        grid.appendChild(btn);
-        registerResponsiveTile(btn);
-        typeButtons.set(type.id, btn);
-        typeControlTargets.set(type.id, type.id);
-      });
-    });
-    gridEl.appendChild(grid);
-    return;
-  }
-  if (!tile.chordId) {
-    const filler = document.createElement('div');
-    filler.className = 'tile spacer';
-    filler.dataset.variant = tile.variant ?? 'border';
-    filler.style.gridRow = tile.row;
-    filler.style.gridColumn = tile.column;
-    filler.setAttribute('aria-hidden', 'true');
-    gridEl.appendChild(filler);
-    return;
-  }
+// Generate modifier grid (left side)
+MODIFIER_LAYOUT.forEach((row, rowIndex) => {
+  row.forEach((typeId, colIndex) => {
+    if (!typeId) {
+      return;
+    }
+    const type = TYPE_META.get(typeId);
+    if (!type) {
+      return;
+    }
+    const btn = document.createElement('div');
+    btn.className = 'tile type-button';
+    btn.tabIndex = 0;
+    btn.setAttribute('role', 'button');
+    btn.textContent = type.label;
+    btn.dataset.type = type.id;
+    btn.style.gridRow = rowIndex + 1;
+    btn.style.gridColumn = colIndex + 1;
+    const description = type.description || type.label;
+    btn.setAttribute('aria-label', `Hold to apply ${description} chord`);
+    btn.addEventListener('pointerdown', (event) => handleTypePointerDown(event, type.id, btn));
+    btn.addEventListener('pointerup', (event) => handleTypePointerEnd(event));
+    btn.addEventListener('pointerleave', (event) => handleTypePointerEnd(event));
+    btn.addEventListener('pointercancel', (event) => handleTypePointerEnd(event));
+    modifierGridEl.appendChild(btn);
+    registerResponsiveTile(btn);
+    typeButtons.set(type.id, btn);
+    typeControlTargets.set(type.id, type.id);
+  });
+});
 
-  const chord = getChord(tile.chordId);
-  if (!chord) {
-    console.warn(`Skipping unknown chord ${tile.chordId}`);
-    return;
-  }
-  const btn = document.createElement('div');
-  btn.className = 'tile chord';
-  btn.tabIndex = 0;
-  btn.setAttribute('role', 'button');
-  btn.textContent = tile.label ?? chord.label;
-  btn.dataset.chord = tile.chordId;
-  btn.dataset.variant = tile.variant;
-  btn.dataset.orientation = tile.orientation ?? 'main';
-  btn.style.gridRow = tile.row;
-  btn.style.gridColumn = tile.column;
-  btn.setAttribute('aria-label', `Play ${btn.textContent} chord`);
-  btn.addEventListener('pointerdown', (event) => handlePointerDown(event, tile.chordId, btn));
-  btn.addEventListener('pointerup', (event) => handlePointerEnd(event));
-  btn.addEventListener('pointerleave', (event) => handlePointerEnd(event));
-  btn.addEventListener('pointercancel', (event) => handlePointerEnd(event));
-  btn.addEventListener('keydown', (event) => handleKeyDown(event, tile.chordId, btn));
-  btn.addEventListener('keyup', (event) => handleKeyUp(event, tile.chordId, btn));
-  registerResponsiveTile(btn);
-  gridEl.appendChild(btn);
-  chordButtons.push({
-    button: btn,
-    chordId: tile.chordId,
-    defaultLabel: btn.textContent,
-    allowModifiers: chord.allowModifiers === true
+// Generate harmony grid (right side)
+HARMONY_LAYOUT.forEach((row, rowIndex) => {
+  row.forEach((chordId, colIndex) => {
+    if (!chordId) {
+      // Create spacer tile
+      const spacer = document.createElement('div');
+      spacer.className = 'tile spacer';
+      spacer.dataset.variant = 'border';
+      spacer.style.gridRow = rowIndex + 1;
+      spacer.style.gridColumn = colIndex + 1;
+      spacer.setAttribute('aria-hidden', 'true');
+      harmonyGridEl.appendChild(spacer);
+      return;
+    }
+    const chord = getChord(chordId);
+    if (!chord) {
+      console.warn(`Skipping unknown chord ${chordId}`);
+      return;
+    }
+    const btn = document.createElement('div');
+    btn.className = 'tile chord';
+    btn.tabIndex = 0;
+    btn.setAttribute('role', 'button');
+    btn.textContent = chord.label;
+    btn.dataset.chord = chordId;
+    // Determine if this is a border tile (dim or 7th)
+    const isDim = chord.chordType === 'dim';
+    const is7th = chord.chordType === '7';
+    if (isDim) {
+      btn.dataset.variant = 'border';
+      btn.dataset.orientation = 'vertical';
+    } else if (is7th) {
+      btn.dataset.variant = 'border';
+      btn.dataset.orientation = 'horizontal';
+    }
+    btn.style.gridRow = rowIndex + 1;
+    btn.style.gridColumn = colIndex + 1;
+    btn.setAttribute('aria-label', `Play ${btn.textContent} chord`);
+    btn.addEventListener('pointerdown', (event) => handlePointerDown(event, chordId, btn));
+    btn.addEventListener('pointerup', (event) => handlePointerEnd(event));
+    btn.addEventListener('pointerleave', (event) => handlePointerEnd(event));
+    btn.addEventListener('pointercancel', (event) => handlePointerEnd(event));
+    btn.addEventListener('keydown', (event) => handleKeyDown(event, chordId, btn));
+    btn.addEventListener('keyup', (event) => handleKeyUp(event, chordId, btn));
+    registerResponsiveTile(btn);
+    harmonyGridEl.appendChild(btn);
+    chordButtons.push({
+      button: btn,
+      chordId: chordId,
+      defaultLabel: btn.textContent,
+      allowModifiers: chord.allowModifiers === true
+    });
   });
 });
 
