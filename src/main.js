@@ -77,12 +77,8 @@ let activeButton = null;
 let activeTypeButton = null;
 let manualOverrideType = null;
 let keyboardKeyOrder = 0;
-const CONTEXTUAL_TYPE_TARGETS = new Map([
-  ['major', 'maj7'],
-  ['m', 'm7'],
-  ['7', '7sus4'],
-  ['dim', 'dim7']
-]);
+// Contextual type behavior disabled
+// const CONTEXTUAL_TYPE_TARGETS = new Map([...]);
 const typeControlTargets = new Map();
 let activeChordBaseType = null;
 
@@ -91,19 +87,19 @@ CHORD_TYPES.forEach((type) => TYPE_META.set(type.id, type));
 
 // Modifier grid layout: 4x4 grid with all chord types
 const MODIFIER_LAYOUT = [
-  ['major', 'm', '7', 'dim'],
-  ['maj7', 'm7', '7sus4', 'dim7'],
-  ['sus2', 'aug', '6', 'm6'],
-  ['m7b5', '9', 'm9', 'maj9']
+  ['major', 'maj7', 'aug', 'sus4'],
+  ['m', 'm7', 'm6', 'mMaj7'],
+  ['7', '7sus4', '7sharp5', '7b9'],
+  ['dim', 'dim7', 'm7b5', 'm7b5_7']
 ];
 
 // Harmony grid layout: 5x5 grid with border tiles
-// Main chords: V, vi, viiø / I, ii, iii / IV, V, vi
+// Main chords: V, vi, vii° / I, ii, iii / IV, V, vi
 // Horizontal borders (dim): between main chords
 // Vertical borders (7th): dominant 7 version of chord above
 // null = spacer tile
 const HARMONY_LAYOUT = [
-  ['G', 'G#dim', 'Am', 'Bdim', 'Bm7b5'],  // Row 1: V, dim, vi, dim, viiø
+  ['G', 'G#dim', 'Am', 'Bdim', 'Bm7b5'],  // Row 1: V, dim, vi, dim, vii°
   ['G7', null, 'A7', null, 'B7'],         // Row 2: 7th chords (dominant 7 of chord above)
   ['C', 'C#dim', 'Dm', 'D#dim', 'Em'],    // Row 3: I, dim, ii, dim, iii
   ['C7', null, 'D7', null, 'E7'],         // Row 4: 7th chords (dominant 7 of chord above)
@@ -146,7 +142,7 @@ MODIFIER_LAYOUT.forEach((row, rowIndex) => {
     modifierGridEl.appendChild(btn);
     registerResponsiveTile(btn);
     typeButtons.set(type.id, btn);
-    typeControlTargets.set(type.id, type.id);
+    // typeControlTargets.set(type.id, type.id);
   });
 });
 
@@ -206,7 +202,7 @@ HARMONY_LAYOUT.forEach((row, rowIndex) => {
 });
 
 setActiveType(null);
-applyTypeControlContext(null);
+// applyTypeControlContext(null);
 
 async function handlePointerDown(event, chordId, button) {
   event.preventDefault();
@@ -352,8 +348,8 @@ function playChord(selection, source = 'pointer', button = null) {
       activeButton = null;
     }
     const chordMeta = getChord(chordId);
-    const baseTypeForContext = target.baseTypeId ?? chordMeta?.baseTypeId ?? chordMeta?.chordType ?? null;
-    applyTypeControlContext(baseTypeForContext);
+    // Contextual type updates are disabled since all types are available.
+    // applyTypeControlContext(baseTypeForContext);
     setActiveType(manualOverrideType);
     updateStatus(`Playing ${chordMeta?.label || chordId}`);
   } catch (err) {
@@ -377,7 +373,7 @@ function stopChord(chordId, options = {}) {
   }
   if (!engine.currentChordId) {
     setActiveType(manualOverrideType);
-    applyTypeControlContext(null);
+    // applyTypeControlContext(null);
   }
   if (!options.keepPointer) {
     activePointerId = null;
@@ -484,57 +480,24 @@ function getButtonForType(typeId) {
   if (!typeId) {
     return null;
   }
-  const direct = typeButtons.get(typeId);
-  if (direct) {
-    return direct;
-  }
-  for (const [controlId, targetTypeId] of typeControlTargets.entries()) {
-    if (targetTypeId === typeId) {
-      return typeButtons.get(controlId) || null;
-    }
-  }
-  return null;
+  return typeButtons.get(typeId) || null;
 }
 
 function getControlTargetType(controlId) {
-  return typeControlTargets.get(controlId) || controlId;
-}
-
-function applyTypeControlContext(baseTypeId) {
-  if (activeChordBaseType === baseTypeId) {
-    return;
-  }
-  activeChordBaseType = baseTypeId || null;
-  typeButtons.forEach((button, controlId) => {
-    const nextTarget = resolveControlTarget(controlId, baseTypeId);
-    typeControlTargets.set(controlId, nextTarget);
-    updateTypeButtonVisual(controlId, nextTarget);
-  });
-}
-
-function resolveControlTarget(controlId, baseTypeId) {
-  if (baseTypeId && controlId === baseTypeId) {
-    const contextualTarget = CONTEXTUAL_TYPE_TARGETS.get(controlId);
-    if (contextualTarget && TYPE_META.has(contextualTarget)) {
-      return contextualTarget;
-    }
-  }
   return controlId;
 }
 
-function updateTypeButtonVisual(controlId, targetTypeId) {
-  const button = typeButtons.get(controlId);
-  if (!button) {
-    return;
-  }
-  const targetMeta = TYPE_META.get(targetTypeId) || TYPE_META.get(controlId);
-  const label = targetMeta?.label || targetTypeId;
-  if (button.textContent !== label) {
-    button.textContent = label;
-  }
-  const description = targetMeta?.description || label;
-  button.setAttribute('aria-label', `Hold to apply ${description} chord`);
-}
+// function applyTypeControlContext(baseTypeId) {
+//   // Disabled
+// }
+
+// function resolveControlTarget(controlId, baseTypeId) {
+//   return controlId;
+// }
+
+// function updateTypeButtonVisual(controlId, targetTypeId) {
+//   // Disabled
+// }
 
 function updateOverrideState() {
   const override = getActiveTouchOverride() ?? getActiveKeyboardOverride() ?? null;
@@ -640,4 +603,37 @@ function handleTypeKeyUp(event) {
   event.preventDefault();
   keyboardActiveKeys.delete(key);
   updateOverrideState();
+}
+
+function updateGridLayout() {
+  const container = document.querySelector('.two-pane-container');
+  if (!container) return;
+  
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  
+  const harmonySize = Math.min(w, h);
+  const remainingW = w - harmonySize;
+  const modifierSize = Math.max(0, Math.min(remainingW, h));
+
+  if (harmonyGridEl) {
+    harmonyGridEl.style.width = `${harmonySize}px`;
+    harmonyGridEl.style.height = `${harmonySize}px`;
+    harmonyGridEl.style.flex = 'none';
+  }
+
+  if (modifierGridEl) {
+    modifierGridEl.style.width = `${modifierSize}px`;
+    modifierGridEl.style.height = `${modifierSize}px`;
+    modifierGridEl.style.flex = 'none';
+    modifierGridEl.style.display = modifierSize < 1 ? 'none' : 'grid';
+  }
+}
+
+window.addEventListener('resize', updateGridLayout);
+// Initial layout update
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', updateGridLayout);
+} else {
+  updateGridLayout();
 }
