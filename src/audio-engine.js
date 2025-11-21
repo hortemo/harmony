@@ -180,4 +180,18 @@ export class AudioEngine {
     const audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
     this.convolver.buffer = audioBuffer;
   }
+
+  unlockSilentMode() {
+    if (this.silentModeUnlocked) {
+      return;
+    }
+    // Play a silent HTML5 audio element to force the audio session category to 'Playback'
+    // This is the most reliable way to bypass the hardware silent switch on iOS
+    const audio = new Audio();
+    audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAgZGF0YQQAAAAAAA==';
+    audio.play().catch(() => {
+      // Ignore auto-play errors, we just want to trigger the session switch if possible
+    });
+    this.silentModeUnlocked = true;
+  }
 }

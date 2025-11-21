@@ -12,10 +12,10 @@ const TILE_FONT_CONFIG = {
 };
 const tileFontObserver = typeof ResizeObserver !== 'undefined'
   ? new ResizeObserver((entries) => {
-      entries.forEach(({ target, contentRect }) => {
-        applyTileFontSize(target, contentRect);
-      });
-    })
+    entries.forEach(({ target, contentRect }) => {
+      applyTileFontSize(target, contentRect);
+    });
+  })
   : null;
 
 function applyTileFontSize(element, rect = null) {
@@ -99,7 +99,7 @@ const MODIFIER_LAYOUT = [
 // Vertical borders (7th): dominant 7 version of chord above
 // null = spacer tile
 const HARMONY_LAYOUT = [
-  ['G', 'G#dim', 'Am', 'Bdim', 'Bm7b5'],  // Row 1: V, dim, vi, dim, vii°
+  ['G', 'G#dim', 'Am', 'A#dim', 'Bdim'],  // Row 1: V, dim, vi, dim, vii°
   ['G7', null, 'A7', null, 'B7'],         // Row 2: 7th chords (dominant 7 of chord above)
   ['C', 'C#dim', 'Dm', 'D#dim', 'Em'],    // Row 3: I, dim, ii, dim, iii
   ['C7', null, 'D7', null, 'E7'],         // Row 4: 7th chords (dominant 7 of chord above)
@@ -212,6 +212,7 @@ async function handlePointerDown(event, chordId, button) {
   button?.setPointerCapture(event.pointerId);
   try {
     await engine.ensureStarted();
+    engine.unlockSilentMode();
     playChord(selection, 'pointer', button);
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
@@ -311,7 +312,10 @@ function handleKeyDown(event, chordId, button) {
   }
   const selection = resolveChordSelection(chordId);
   latchedChord = { baseId: chordId, resolvedId: selection.chordId, button, baseTypeId: selection.baseTypeId || null };
-  engine.ensureStarted().then(() => playChord(selection, 'keyboard', button));
+  engine.ensureStarted().then(() => {
+    engine.unlockSilentMode();
+    playChord(selection, 'keyboard', button);
+  });
 }
 
 function handleKeyUp(event, chordId, button) {
@@ -387,7 +391,7 @@ function setPressed(button, state) {
   button.dataset.pressed = state ? 'true' : 'false';
 }
 
-function updateStatus() {}
+function updateStatus() { }
 
 function resolveChordSelection(chordId) {
   const chord = getChord(chordId);
@@ -608,10 +612,10 @@ function handleTypeKeyUp(event) {
 function updateGridLayout() {
   const container = document.querySelector('.two-pane-container');
   if (!container) return;
-  
+
   const w = container.clientWidth;
   const h = container.clientHeight;
-  
+
   const harmonySize = Math.min(w, h);
   const remainingW = w - harmonySize;
   const modifierSize = Math.max(0, Math.min(remainingW, h));

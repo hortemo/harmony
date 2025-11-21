@@ -83,13 +83,12 @@ export const CHORDS = [
   { id: 'F', label: 'IV', tones: ['F', 'A', 'C'], root: 'F', chordType: 'major', allowModifiers: true },
   { id: 'G', label: 'V', tones: ['G', 'B', 'D'], root: 'G', chordType: 'major', allowModifiers: true },
   { id: 'Am', label: 'vi', tones: ['A', 'C', 'E'], root: 'A', chordType: 'm', allowModifiers: true },
-  { id: 'Bm7b5', label: 'vii°', tones: ['B', 'D', 'F', 'A'], root: 'B', chordType: 'm7b5', allowModifiers: true },
-  { id: 'Bb', label: 'bVII', tones: ['Bb', 'D', 'F'], root: 'Bb', chordType: 'major', allowModifiers: true },
+  { id: 'Bdim', label: 'vii°', tones: ['B', 'D', 'F'], root: 'B', chordType: 'dim', allowModifiers: true },
   { id: 'C#dim', label: 'o', tones: ['C#', 'E', 'G'], root: 'C#', chordType: 'dim', allowModifiers: true },
   { id: 'D#dim', label: 'o', tones: ['D#', 'F#', 'A'], root: 'D#', chordType: 'dim', allowModifiers: true },
   { id: 'F#dim', label: 'o', tones: ['F#', 'A', 'C'], root: 'F#', chordType: 'dim', allowModifiers: true },
   { id: 'G#dim', label: 'o', tones: ['G#', 'B', 'D'], root: 'G#', chordType: 'dim', allowModifiers: true },
-  { id: 'Bdim', label: 'o', tones: ['B', 'D', 'F'], root: 'B', chordType: 'dim', allowModifiers: true },
+  { id: 'A#dim', label: 'o', tones: ['A#', 'C#', 'E'], root: 'A#', chordType: 'dim', allowModifiers: true },
   { id: 'C7', label: '7', tones: ['C', 'E', 'G', 'Bb'], root: 'C', chordType: '7', allowModifiers: true },
   { id: 'D7', label: '7', tones: ['D', 'F#', 'A', 'C'], root: 'D', chordType: '7', allowModifiers: true },
   { id: 'E7', label: '7', tones: ['E', 'G#', 'B', 'D'], root: 'E', chordType: '7', allowModifiers: true },
@@ -99,7 +98,6 @@ export const CHORDS = [
   { id: 'B7', label: '7', tones: ['B', 'D#', 'F#', 'A'], root: 'B', chordType: '7', allowModifiers: true },
   { id: 'Edim', label: 'o', tones: ['E', 'G', 'Bb'], root: 'E', chordType: 'dim', allowModifiers: true },
   { id: 'Adim', label: 'o', tones: ['A', 'C', 'Eb'], root: 'A', chordType: 'dim', allowModifiers: true },
-  { id: 'Bb7', label: '7', tones: ['Bb', 'D', 'F', 'Ab'], root: 'Bb', chordType: '7', allowModifiers: true }
 ];
 
 const DEFAULT_ROOT_OCTAVE = 3;
