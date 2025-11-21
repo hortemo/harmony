@@ -543,22 +543,14 @@ window.addEventListener('blur', () => {
   }
 });
 
-const isLocalhost =
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1' ||
-  window.location.hostname.endsWith('.local');
-
-if ('serviceWorker' in navigator && !isLocalhost) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .catch((err) => console.error('Service worker registration failed', err));
-  });
-} else if ('serviceWorker' in navigator) {
-  // Ensure dev server sessions do not keep using an old cached layout.
+// Disable caching: unregister all service workers and clear caches on load.
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     registrations.forEach((registration) => registration.unregister());
   });
+}
+if ('caches' in window) {
+  caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
 }
 
 window.addEventListener('online', () => updateStatus('Back online'));
