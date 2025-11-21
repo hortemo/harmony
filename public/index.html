@@ -12,7 +12,16 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="stylesheet" href="./ui.css" />
+  <link id="ui-css" rel="stylesheet" href="./ui.css" />
+  <script>
+    (function () {
+      var link = document.getElementById('ui-css');
+      if (!link) return;
+      var href = link.getAttribute('href') || '';
+      var base = href.split('?')[0];
+      link.setAttribute('href', base + '?t=' + Date.now());
+    }());
+  </script>
 </head>
 
 <body>
