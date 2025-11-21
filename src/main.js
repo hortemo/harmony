@@ -271,7 +271,7 @@ function handleChordPointerMove(event) {
 
 function handleTypePointerMove(event) {
   const entry = typePointerState.get(event.pointerId);
-  if (!entry || entry.pointerType !== 'touch') {
+  if (!entry) {
     return;
   }
   const currentControlId = entry.controlId;
@@ -422,11 +422,9 @@ function resolveChordSelection(chordId) {
 
 function handleTypePointerDown(event, controlId, button) {
   event.preventDefault();
-  if (event.pointerType !== 'touch') {
-    return;
-  }
   const targetTypeId = getControlTargetType(controlId);
-  typePointerState.set(event.pointerId, { controlId, targetTypeId, button, pointerType: 'touch' });
+  const pointerType = event.pointerType || 'mouse';
+  typePointerState.set(event.pointerId, { controlId, targetTypeId, button, pointerType });
   button?.setPointerCapture(event.pointerId);
   setTypeHeld(controlId, true);
   updateOverrideState();
@@ -450,11 +448,11 @@ function handleTypePointerEnd(event) {
   updateOverrideState();
 }
 
-function getActiveTouchOverride() {
+function getActivePointerOverride() {
   const entries = [];
   typePointerState.forEach((value) => entries.push(value));
   for (let i = entries.length - 1; i >= 0; i -= 1) {
-    if (entries[i].pointerType === 'touch' && entries[i].targetTypeId) {
+    if (entries[i].targetTypeId) {
       return entries[i].targetTypeId;
     }
   }
@@ -504,7 +502,7 @@ function getControlTargetType(controlId) {
 // }
 
 function updateOverrideState() {
-  const override = getActiveTouchOverride() ?? getActiveKeyboardOverride() ?? null;
+  const override = getActivePointerOverride() ?? getActiveKeyboardOverride() ?? null;
   if (override !== manualOverrideType) {
     manualOverrideType = override;
     refreshActiveChordVoicing();
@@ -609,12 +607,26 @@ function handleTypeKeyUp(event) {
   updateOverrideState();
 }
 
+function getAvailableViewportSize() {
+  const viewport = window.visualViewport;
+  if (viewport?.width && viewport?.height) {
+    return { width: viewport.width, height: viewport.height };
+  }
+  return {
+    width: document.documentElement.clientWidth || window.innerWidth || 0,
+    height: window.innerHeight || document.documentElement.clientHeight || 0
+  };
+}
+
 function updateGridLayout() {
   const container = document.querySelector('.two-pane-container');
   if (!container) return;
 
-  const w = container.clientWidth;
-  const h = container.clientHeight;
+  const { width: viewportWidth, height: viewportHeight } = getAvailableViewportSize();
+  document.documentElement.style.setProperty('--viewport-height', `${viewportHeight}px`);
+
+  const w = Math.min(container.clientWidth || viewportWidth, viewportWidth);
+  const h = Math.min(container.clientHeight || viewportHeight, viewportHeight);
 
   const harmonySize = Math.min(w, h);
   const remainingW = w - harmonySize;
@@ -635,6 +647,9 @@ function updateGridLayout() {
 }
 
 window.addEventListener('resize', updateGridLayout);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', updateGridLayout);
+}
 // Initial layout update
 if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', updateGridLayout);
